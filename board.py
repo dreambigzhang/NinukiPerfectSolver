@@ -265,19 +265,36 @@ class GoBoard(object):
     def isGameOver(self):
         return self.end_of_game() or self.detect_five_in_a_row() != EMPTY
     
+    
+
+    def index_to_position(self, index: int) -> str:
+        """
+        Convert a 1D array index to a string representation of the corresponding board position.
+        Example: index_to_position(0, 19) returns 'a19', index_to_position(18, 19) returns 's19'
+        """
+        row = self.size+1 - index // (self.size+1)
+        col = chr(ord('a') + index % (self.size+1))
+        return col + str(row)
+
     def alphabeta(self, color, alpha, beta):
         if self.isGameOver():
-            return self.evalEndState(), self.last_move
+            winner = self.end_of_game()
+            if winner:
+                return winner, self.last_move
+            else:
+                return self.evalEndState(), self.last_move
+        alpha_move = None
         for point in self.get_empty_points():
             self.play_move(point, color)
             value, _ = self.alphabeta(opponent(color), -beta, -alpha)
             value = -value
             if value > alpha:
                 alpha = value
+                alpha_move = point
             self.undoMove()
             if value >= beta: 
-                return beta, point   # or value in failsoft (later)
-        return alpha, self.last_move
+                return beta, point  # or value in failsoft (later)
+        return alpha, alpha_move
 
     def undoMove(self):
         self.board[self.last_move] = EMPTY

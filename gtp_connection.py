@@ -403,8 +403,33 @@ class GtpConnection:
             self.respond("pass")
             return
         
-        winner, move = self.board.alphabeta(color, -100000, 100000)
-        self.respond(str(winner)+str(move))
+        result, move = self.board.alphabeta(color, -100000, 100000)
+
+        move_formatted = self.board.index_to_position(move)
+        print(move_formatted)
+        #print(result, move)
+        if result == -1:
+            result = WHITE
+        elif result == 1:
+            result = BLACK
+        else:
+            result = 'draw'
+
+        if result == opponent(color):
+            if result == WHITE:
+                self.respond('w')
+            elif result == BLACK:
+                self.respond('b')
+            else:
+                self.respond('draw')
+        else:
+            if result == WHITE:
+                response = 'w'+ ' ' + move_formatted
+            elif result == BLACK:
+                response = 'b'+ ' ' + move_formatted
+            else:
+                response = 'draw' + ' ' + move_formatted
+            self.respond(response)
 
     
 
