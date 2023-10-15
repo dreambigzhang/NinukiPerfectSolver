@@ -141,7 +141,7 @@ class GoBoard(object):
         self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
-
+    '''
     def copy(self) -> 'GoBoard':
         b = GoBoard(self.size)
         assert b.NS == self.NS
@@ -153,13 +153,13 @@ class GoBoard(object):
         assert b.maxpoint == self.maxpoint
         b.board = np.copy(self.board)
         return b
-
+    '''
     def get_color(self, point: GO_POINT) -> GO_COLOR:
         return self.board[point]
 
     def pt(self, row: int, col: int) -> GO_POINT:
         return coord_to_point(row, col, self.size)
-
+    '''
     def _is_legal_check_simple_cases(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
         Check the simple cases of illegal moves.
@@ -180,7 +180,7 @@ class GoBoard(object):
         if point == self.ko_recapture:
             return False
         return True
-
+    
     def is_legal(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
         Check whether it is legal for color to play on point
@@ -192,7 +192,7 @@ class GoBoard(object):
         board_copy: GoBoard = self.copy()
         can_play_move = board_copy.play_move(point, color)
         return can_play_move
-
+    '''
     def end_of_game(self) -> bool:
         return self.last_move == PASS \
            and self.last2_move == PASS
