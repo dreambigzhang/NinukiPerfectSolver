@@ -388,8 +388,15 @@ class GtpConnection:
             Before the first timelimit command is given, the default is 1 second.  
             The seconds will range from  1 <= seconds <= 100
         """
-        timelimit = int(args[2])
-        return
+        if len(args) == 2:
+                timlimit = int(args[1])
+                return
+        if len(args) == 3:
+                timelimit = int(args[2])
+                return
+        else:
+            self.respond("Invalid Command, Try Again")
+            return
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
