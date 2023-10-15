@@ -387,11 +387,13 @@ class GtpConnection:
         """
         if len(args) == 2:
                 timlimit = int(args[1])
+                return
         if len(args) == 3:
                 timelimit = int(args[2])
+                return
         else:
             self.respond("Invalid Command, Try Again")
-        return
+            return
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
