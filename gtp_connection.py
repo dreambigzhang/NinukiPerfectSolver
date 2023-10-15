@@ -29,6 +29,8 @@ from board import GoBoard
 from board_util import GoBoardUtil
 from engine import GoEngine
 
+timelimit = 1
+
 class GtpConnection:
     def __init__(self, go_engine: GoEngine, board: GoBoard, debug_mode: bool = False) -> None:
         """
@@ -382,12 +384,18 @@ class GtpConnection:
         self.play_cmd([board_color, move_as_string, 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
-        """ Implement this function for Assignment 2 """
-        pass
+        """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
+            Before the first timelimit command is given, the default is 1 second.  
+            The seconds will range from  1 <= seconds <= 100
+        """
+        timelimit = int(args[2])
+        return
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
         pass
+
+    
 
     """
     ==========================================================================
