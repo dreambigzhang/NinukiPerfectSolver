@@ -245,7 +245,9 @@ class GoBoard(object):
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point
+
         self.lastCaptures = [self.black_captures, self.white_captures]
+
         O = opponent(color)
         offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
         for offset in offsets:
@@ -263,9 +265,13 @@ class GoBoard(object):
     
     
     def isGameOver(self):
-        return self.end_of_game() or self.detect_five_in_a_row() != EMPTY
+        return self.end_of_game() or self.detect_five_in_a_row() != EMPTY or self.black_captures >= 10 or self.white_captures >= 10 or self.boardIsFull()
     
-    
+    def boardIsFull(self):
+        for point in self.board:
+            if point == EMPTY:
+                return False
+        return True
 
     def index_to_position(self, index: int) -> str:
         """
@@ -275,26 +281,41 @@ class GoBoard(object):
         row = self.size+1 - index // (self.size+1)
         col = chr(ord('a') + index % (self.size+1))
         return col + str(row)
+    
+    def call_alphabeta(self, color):
+        alpha = -10000
+        beta = 10000
+        max_result = -10000
+        maximizing_move = NO_POINT
+        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
 
-    def alphabeta(self, color, alpha, beta):
+        
+        for move in legal_moves:
+            self.play_move(move, color)
+            move_result = - self.alphabeta(opponent(color), alpha, beta)
+            self.undoMove()
+            if move_result > max_result:
+                max_result = move_result
+                maximizing_move = move
+        if max_result >= 1:
+            return color, maximizing_move
+        elif max_result == 0:
+            return 'draw', maximizing_move
+        else:
+            return opponent(color), maximizing_move
+
+    def alphabeta(self, color, alpha, beta): # negamax
         if self.isGameOver():
-            winner = self.end_of_game()
-            if winner:
-                return winner, self.last_move
-            else:
-                return self.evalEndState(), self.last_move
-        alpha_move = None
+            return self.evalEndState(color)
         for point in self.get_empty_points():
             self.play_move(point, color)
-            value, _ = self.alphabeta(opponent(color), -beta, -alpha)
-            value = -value
+            value = - self.alphabeta(opponent(color), -beta, -alpha)
             if value > alpha:
                 alpha = value
-                alpha_move = point
             self.undoMove()
             if value >= beta: 
-                return beta, point  # or value in failsoft (later)
-        return alpha, alpha_move
+                return beta  # or value in failsoft (later)
+        return alpha
 
     def undoMove(self):
         self.board[self.last_move] = EMPTY
@@ -303,13 +324,22 @@ class GoBoard(object):
         self.last2_move = NO_POINT
         self.black_captures, self.white_captures = self.getLastCaptures()
 
-    def evalEndState(self):
-        if self.detect_five_in_a_row() == BLACK:
+    def evalEndState(self, color):
+        if self.detect_five_in_a_row() == color:
             return 1
-        elif self.detect_five_in_a_row() == WHITE:
+        elif self.detect_five_in_a_row() == opponent(color):
             return -1
-        else:
-            return 0
+        elif color == BLACK:
+            if self.black_captures >=10:
+                return 1
+            elif self.white_captures >=10:
+                return -1
+        elif color == WHITE:
+            if self.white_captures >=10:
+                return 1
+            elif self.black_captures >=10:
+                return -1
+        return 0
 
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
         """ List of neighbors of point of given color """

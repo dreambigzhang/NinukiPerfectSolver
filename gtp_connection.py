@@ -377,7 +377,10 @@ class GtpConnection:
             self.respond("pass")
             return
         
-        winner, move = self.board.alphabeta(color, -100000, 100000)
+        result, move = self.board.call_alphabeta(color)
+        
+        move = format_point(point_to_coord(move, self.board.size))
+        
         self.play_cmd([board_color, move, 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
@@ -403,17 +406,9 @@ class GtpConnection:
             self.respond("pass")
             return
         
-        result, move = self.board.alphabeta(color, -100000, 100000)
+        result, move = self.board.call_alphabeta(color)
 
-        move_formatted = self.board.index_to_position(move)
-        print(move_formatted)
-        #print(result, move)
-        if result == -1:
-            result = WHITE
-        elif result == 1:
-            result = BLACK
-        else:
-            result = 'draw'
+        move = format_point(point_to_coord(move, self.board.size))
 
         if result == opponent(color):
             if result == WHITE:
@@ -424,11 +419,11 @@ class GtpConnection:
                 self.respond('draw')
         else:
             if result == WHITE:
-                response = 'w'+ ' ' + move_formatted
+                response = 'w'+ ' ' + move
             elif result == BLACK:
-                response = 'b'+ ' ' + move_formatted
+                response = 'b'+ ' ' + move
             else:
-                response = 'draw' + ' ' + move_formatted
+                response = 'draw' + ' ' + move
             self.respond(response)
 
     
