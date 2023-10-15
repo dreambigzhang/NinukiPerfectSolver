@@ -141,62 +141,18 @@ class GoBoard(object):
         self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
-    '''
-    def copy(self) -> 'GoBoard':
-        b = GoBoard(self.size)
-        assert b.NS == self.NS
-        assert b.WE == self.WE
-        b.ko_recapture = self.ko_recapture
-        b.last_move = self.last_move
-        b.last2_move = self.last2_move
-        b.current_player = self.current_player
-        assert b.maxpoint == self.maxpoint
-        b.board = np.copy(self.board)
-        return b
-    '''
+    
     def get_color(self, point: GO_POINT) -> GO_COLOR:
         return self.board[point]
 
     def pt(self, row: int, col: int) -> GO_POINT:
         return coord_to_point(row, col, self.size)
-    '''
-    def _is_legal_check_simple_cases(self, point: GO_POINT, color: GO_COLOR) -> bool:
-        """
-        Check the simple cases of illegal moves.
-        Some "really bad" arguments will just trigger an assertion.
-        If this function returns False: move is definitely illegal
-        If this function returns True: still need to check more
-        complicated cases such as suicide.
-        """
-        assert is_black_white(color)
-        if point == PASS:
-            return True
-        # Could just return False for out-of-bounds, 
-        # but it is better to know if this is called with an illegal point
-        assert self.pt(1, 1) <= point <= self.pt(self.size, self.size)
-        assert is_black_white_empty(self.board[point])
-        if self.board[point] != EMPTY:
-            return False
-        if point == self.ko_recapture:
-            return False
-        return True
-    
-    def is_legal(self, point: GO_POINT, color: GO_COLOR) -> bool:
-        """
-        Check whether it is legal for color to play on point
-        This method tries to play the move on a temporary copy of the board.
-        This prevents the board from being modified by the move
-        """
-        if point == PASS:
-            return True
-        board_copy: GoBoard = self.copy()
-        can_play_move = board_copy.play_move(point, color)
-        return can_play_move
-    '''
+  
     def end_of_game(self) -> bool:
         return self.last_move == PASS \
            and self.last2_move == PASS
-           
+
+    # this is equivalent to generating all legal moves
     def get_empty_points(self) -> np.ndarray:
         """
         Return:
@@ -289,6 +245,7 @@ class GoBoard(object):
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point
+        self.lastCaptures = [self.black_captures, self.white_captures]
         O = opponent(color)
         offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
         for offset in offsets:
@@ -301,6 +258,38 @@ class GoBoard(object):
                     self.white_captures += 2
         return True
     
+    
+    def isGameOver(self):
+        return self.end_of_game() or self.detect_five_in_a_row() != EMPTY
+    
+    def alphabeta(self, color, alpha, beta):
+        if self.isGameOver():
+            return self.evalEndState()
+        for point in self.get_empty_points():
+            self.play_move(point, color)
+            value = -self.alphabeta(opponent(color), -beta, -alpha)
+            if value > alpha:
+                alpha = value
+            self.undoMove()
+            if value >= beta: 
+                return beta   # or value in failsoft (later)
+        return alpha
+
+    def undoMove(self):
+        self.board[self.last_move] = EMPTY
+        self.current_player = opponent(self.current_player)
+        self.last_move = self.last2_move
+        self.last2_move = NO_POINT
+        self.black_captures, self.white_captures = self.lastCaptures()
+
+    def evalEndState(self):
+        if self.detect_five_in_a_row() == BLACK:
+            return 1
+        elif self.detect_five_in_a_row() == WHITE:
+            return -1
+        else:
+            return 0
+
     def neighbors_of_color(self, point: GO_POINT, color: GO_COLOR) -> List:
         """ List of neighbors of point of given color """
         nbc: List[GO_POINT] = []
@@ -331,6 +320,9 @@ class GoBoard(object):
         if self.last2_move != NO_POINT and self.last2_move != PASS:
             board_moves.append(self.last2_move)
         return board_moves
+
+    def lastCaptures(self):
+        return self.lastCaptures[0], self.lastCaptures[1]
 
     def detect_five_in_a_row(self) -> GO_COLOR:
         """
