@@ -376,12 +376,9 @@ class GtpConnection:
         if legal_moves.size == 0:
             self.respond("pass")
             return
-        rng = np.random.default_rng()
-        choice = rng.choice(len(legal_moves))
-        move = legal_moves[choice]
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        self.play_cmd([board_color, move_as_string, 'print_move'])
+        
+        winner, move = self.board.alphabeta(color, -100000, 100000)
+        self.play_cmd([board_color, move, 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
@@ -393,7 +390,21 @@ class GtpConnection:
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
-        pass
+        color = self.board.current_player
+        result1 = self.board.detect_five_in_a_row()
+        result2 = EMPTY
+        if self.board.get_captures(opponent(color)) >= 10:
+            result2 = opponent(color)
+        if result1 == opponent(color) or result2 == opponent(color):
+            self.respond("resign")
+            return
+        legal_moves = self.board.get_empty_points()
+        if legal_moves.size == 0:
+            self.respond("pass")
+            return
+        
+        winner, move = self.board.alphabeta(color, -100000, 100000)
+        self.respond(str(winner)+str(move))
 
     
 

@@ -249,13 +249,16 @@ class GoBoard(object):
         O = opponent(color)
         offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
         for offset in offsets:
-            if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
-                self.board[point+offset] = EMPTY
-                self.board[point+(offset*2)] = EMPTY
-                if color == BLACK:
-                    self.black_captures += 2
-                else:
-                    self.white_captures += 2
+            try:
+                if self.board[point+offset] == O and self.board[point+(offset*2)] == O and self.board[point+(offset*3)] == color:
+                    self.board[point+offset] = EMPTY
+                    self.board[point+(offset*2)] = EMPTY
+                    if color == BLACK:
+                        self.black_captures += 2
+                    else:
+                        self.white_captures += 2
+            except:
+                pass
         return True
     
     
@@ -264,23 +267,24 @@ class GoBoard(object):
     
     def alphabeta(self, color, alpha, beta):
         if self.isGameOver():
-            return self.evalEndState()
+            return self.evalEndState(), self.last_move
         for point in self.get_empty_points():
             self.play_move(point, color)
-            value = -self.alphabeta(opponent(color), -beta, -alpha)
+            value, _ = self.alphabeta(opponent(color), -beta, -alpha)
+            value = -value
             if value > alpha:
                 alpha = value
             self.undoMove()
             if value >= beta: 
-                return beta   # or value in failsoft (later)
-        return alpha
+                return beta, point   # or value in failsoft (later)
+        return alpha, self.last_move
 
     def undoMove(self):
         self.board[self.last_move] = EMPTY
         self.current_player = opponent(self.current_player)
         self.last_move = self.last2_move
         self.last2_move = NO_POINT
-        self.black_captures, self.white_captures = self.lastCaptures()
+        self.black_captures, self.white_captures = self.getLastCaptures()
 
     def evalEndState(self):
         if self.detect_five_in_a_row() == BLACK:
@@ -321,7 +325,7 @@ class GoBoard(object):
             board_moves.append(self.last2_move)
         return board_moves
 
-    def lastCaptures(self):
+    def getLastCaptures(self):
         return self.lastCaptures[0], self.lastCaptures[1]
 
     def detect_five_in_a_row(self) -> GO_COLOR:
