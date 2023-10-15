@@ -220,22 +220,6 @@ class GoBoard(object):
             start: int = self.row_start(row)
             board_array[start : start + self.size] = EMPTY
 
-    def is_eye(self, point: GO_POINT, color: GO_COLOR) -> bool:
-        """
-        Check if point is a simple eye for color
-        """
-        if not self._is_surrounded(point, color):
-            return False
-        # Eye-like shape. Check diagonals to detect false eye
-        opp_color = opponent(color)
-        false_count = 0
-        at_edge = 0
-        for d in self._diag_neighbors(point):
-            if self.board[d] == BORDER:
-                at_edge = 1
-            elif self.board[d] == opp_color:
-                false_count += 1
-        return false_count <= 1 - at_edge  # 0 at edge, 1 in center
 
     def _is_surrounded(self, point: GO_POINT, color: GO_COLOR) -> bool:
         """
@@ -248,16 +232,6 @@ class GoBoard(object):
                 return False
         return True
 
-    def _has_liberty(self, block: np.ndarray) -> bool:
-        """
-        Check if the given block has any liberty.
-        block is a numpy boolean array
-        """
-        for stone in where1d(block):
-            empty_nbs = self.neighbors_of_color(stone, EMPTY)
-            if empty_nbs:
-                return True
-        return False
 
     def _block_of(self, stone: GO_POINT) -> np.ndarray:
         """
