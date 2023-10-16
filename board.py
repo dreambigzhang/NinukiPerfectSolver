@@ -14,6 +14,7 @@ The board uses a 1-dimensional representation with padding
 import numpy as np
 from typing import List, Tuple
 
+
 from board_base import (
     board_array_size,
     coord_to_point,
@@ -50,8 +51,7 @@ class GoBoard(object):
         assert 2 <= size <= MAXSIZE
         self.reset(size)
         self.calculate_rows_cols_diags()
-        self.black_captures = 0
-        self.white_captures = 0
+        
 
     def add_two_captures(self, color: GO_COLOR) -> None:
         if color == BLACK:
@@ -63,6 +63,19 @@ class GoBoard(object):
             return self.black_captures
         elif color == WHITE:
             return self.white_captures
+    
+
+    def copy(self) -> 'GoBoard':
+        b = GoBoard(self.size)
+        assert b.NS == self.NS
+        assert b.WE == self.WE
+        b.ko_recapture = self.ko_recapture
+        b.last_move = self.last_move
+        b.last2_move = self.last2_move
+        b.current_player = self.current_player
+        assert b.maxpoint == self.maxpoint
+        b.board = np.copy(self.board)
+        return b
     
     def calculate_rows_cols_diags(self) -> None:
         if self.size < 5:
@@ -141,6 +154,7 @@ class GoBoard(object):
         self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
+        self.lastCaptures = [0, 0]
     
     def get_color(self, point: GO_POINT) -> GO_COLOR:
         return self.board[point]
@@ -283,6 +297,7 @@ class GoBoard(object):
         return col + str(row)
     
     def call_alphabeta(self, color):
+
         alpha = -10000
         beta = 10000
         max_result = -10000
@@ -291,12 +306,20 @@ class GoBoard(object):
 
         
         for move in legal_moves:
-            self.play_move(move, color)
-            move_result = - self.alphabeta(opponent(color), alpha, beta)
-            self.undoMove()
+            board_copy = self.copy()
+            board_copy.play_move(move, color)
+
+            #self.play_move(move, color)
+            #move_result = - self.alphabeta(opponent(color), alpha, beta)
+            #self.undoMove()
+
+            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
+
             if move_result > max_result:
                 max_result = move_result
                 maximizing_move = move
+
+        #print(self.get_twoD_board())
         if max_result >= 1:
             return color, maximizing_move
         elif max_result == 0:
@@ -304,18 +327,54 @@ class GoBoard(object):
         else:
             return opponent(color), maximizing_move
 
+
     def alphabeta(self, color, alpha, beta): # negamax
         if self.isGameOver():
-            return self.evalEndState(color)
-        for point in self.get_empty_points():
-            self.play_move(point, color)
+            return self.evalEndState()
+        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
+        '''
+        formatted_moves = []
+        for move in legal_moves:
+            formatted_moves.append(format_point(point_to_coord(move, self.size)))
+        print(self.get_twoD_board())
+        print(formatted_moves)
+        '''
+        for move in legal_moves:
+            board_copy = np.copy(self.board)
+
+            self.play_move(move, color)
             value = - self.alphabeta(opponent(color), -beta, -alpha)
+            
+            self.board = board_copy
+            self.current_player = opponent(self.current_player)
+            self.last_move = self.last2_move
+            self.last2_move = NO_POINT
+            self.black_captures, self.white_captures = self.getLastCaptures()
+
             if value > alpha:
                 alpha = value
-            self.undoMove()
+            
+            #assert(self.get_twoD_board() == board_copy).all(), f"Board copy does not match after undoing move at {move}\n{self.get_twoD_board()}"
+
             if value >= beta: 
                 return beta  # or value in failsoft (later)
         return alpha
+ 
+    '''
+    def alphabeta(self, color, alpha, beta):
+        if self.isGameOver():
+            return self.evalEndState(color)
+        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
+        for point in legal_moves:
+            board_copy = self.copy()
+            board_copy.play_move(point, color)
+            value = - board_copy.alphabeta(opponent(color), -beta, -alpha)
+            if value > alpha:
+                alpha = value
+            if value >= beta: 
+                return beta  # or value in failsoft (later)
+        return alpha
+    '''
 
     def undoMove(self):
         self.board[self.last_move] = EMPTY
@@ -324,7 +383,8 @@ class GoBoard(object):
         self.last2_move = NO_POINT
         self.black_captures, self.white_captures = self.getLastCaptures()
 
-    def evalEndState(self, color):
+    def evalEndState(self):
+        color = self.current_player
         if self.detect_five_in_a_row() == color:
             return 1
         elif self.detect_five_in_a_row() == opponent(color):
@@ -410,3 +470,50 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
+    
+
+
+    def get_twoD_board(self) -> np.ndarray:
+        """
+        Return: numpy array
+        a two dimensional numpy array with the goboard.
+        Shows stones and empty points as encoded in board_base.py.
+        Result is not padded with BORDER points.
+        Rows 1..size of goboard are copied into rows 0..size - 1 of board2d
+        Then the board is flipped up-down to be consistent with the
+        coordinate system in GoGui (row 1 at the bottom).
+        """
+        size: int = self.size
+        board2d: np.ndarray[GO_POINT] = np.zeros((size, size), dtype=GO_POINT)
+        for row in range(size):
+            start: int = self.row_start(row + 1)
+            board2d[row, :] = self.board[start : start + size]
+        board2d = np.flipud(board2d)
+        return board2d
+    
+
+def point_to_coord(point: GO_POINT, boardsize: int) -> Tuple[int, int]:
+    """
+    Transform point given as board array index 
+    to (row, col) coordinate representation.
+    Special case: PASS is transformed to (PASS,PASS)
+    """
+    if point == PASS:
+        return (PASS, PASS)
+    else:
+        NS = boardsize + 1
+        return divmod(point, NS)
+
+
+def format_point(move: Tuple[int, int]) -> str:
+    """
+    Return move coordinates as a string such as 'A1', or 'PASS'.
+    """
+    assert MAXSIZE <= 25
+    column_letters = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
+    if move[0] == PASS:
+        return "PASS"
+    row, col = move
+    if not 0 <= row < MAXSIZE or not 0 <= col < MAXSIZE:
+        raise ValueError
+    return column_letters[col - 1] + str(row)
