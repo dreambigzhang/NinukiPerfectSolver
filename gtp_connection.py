@@ -28,6 +28,7 @@ from board_base import (
 from board import GoBoard
 from board_util import GoBoardUtil
 from engine import GoEngine
+import time
 
 timelimit = 1
 
@@ -389,10 +390,10 @@ class GtpConnection:
             The seconds will range from  1 <= seconds <= 100
         """
         if len(args) == 2:
-                timlimit = int(args[1])
+                timlimit = float(args[1])
                 return
         if len(args) == 3:
-                timelimit = int(args[2])
+                timelimit = float(args[2])
                 return
         else:
             self.respond("Invalid Command, Try Again")
@@ -400,38 +401,41 @@ class GtpConnection:
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
-        color = self.board.current_player
-        result1 = self.board.detect_five_in_a_row()
-        result2 = EMPTY
-        if self.board.get_captures(opponent(color)) >= 10:
-            result2 = opponent(color)
-        if result1 == opponent(color) or result2 == opponent(color):
-            self.respond("resign")
-            return
-        legal_moves = self.board.get_empty_points()
-        if legal_moves.size == 0:
-            self.respond("pass")
-            return
-        
-        result, move = self.board.call_alphabeta(color)
 
-        move = format_point(point_to_coord(move, self.board.size))
-        move = move.lower()
-        if result == opponent(color):
-            if result == WHITE:
-                self.respond('w')
-            elif result == BLACK:
-                self.respond('b')
+        timelimit_end = time.time() + timelimit
+        while time.time() < timelimit_end: 
+            color = self.board.current_player
+            result1 = self.board.detect_five_in_a_row()
+            result2 = EMPTY
+            if self.board.get_captures(opponent(color)) >= 10:
+                result2 = opponent(color)
+            if result1 == opponent(color) or result2 == opponent(color):
+                self.respond("resign")
+                return
+            legal_moves = self.board.get_empty_points()
+            if legal_moves.size == 0:
+                self.respond("pass")
+                return
+            
+            result, move = self.board.call_alphabeta(color)
+
+            move = format_point(point_to_coord(move, self.board.size))
+            move = move.lower()
+            if result == opponent(color):
+                if result == WHITE:
+                    self.respond('w')
+                elif result == BLACK:
+                    self.respond('b')
+                else:
+                    self.respond('draw')
             else:
-                self.respond('draw')
-        else:
-            if result == WHITE:
-                response = 'w'+ ' ' + move
-            elif result == BLACK:
-                response = 'b'+ ' ' + move
-            else:
-                response = 'draw' + ' ' + move
-            self.respond(response)
+                if result == WHITE:
+                    response = 'w'+ ' ' + move
+                elif result == BLACK:
+                    response = 'b'+ ' ' + move
+                else:
+                    response = 'draw' + ' ' + move
+                self.respond(response)
 
     
 
