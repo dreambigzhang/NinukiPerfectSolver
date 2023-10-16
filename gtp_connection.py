@@ -381,7 +381,7 @@ class GtpConnection:
         
         move = format_point(point_to_coord(move, self.board.size))
         
-        self.play_cmd([board_color, move, 'print_move'])
+        self.play_cmd([board_color, move.lower(), 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
@@ -416,7 +416,7 @@ class GtpConnection:
         result, move = self.board.call_alphabeta(color)
 
         move = format_point(point_to_coord(move, self.board.size))
-
+        move = move.lower()
         if result == opponent(color):
             if result == WHITE:
                 self.respond('w')

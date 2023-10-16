@@ -304,26 +304,27 @@ class GoBoard(object):
         maximizing_move = NO_POINT
         legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
 
-        
         for move in legal_moves:
-            board_copy = self.copy()
-            board_copy.play_move(move, color)
+            board_copy = np.copy(self.board)
 
-            #self.play_move(move, color)
-            #move_result = - self.alphabeta(opponent(color), alpha, beta)
-            #self.undoMove()
-
-            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
+            self.play_move(move, color)
+            move_result = - self.alphabeta(opponent(color), alpha, beta)
+            
+            self.board = board_copy
+            self.current_player = opponent(self.current_player)
+            self.last_move = self.last2_move
+            self.last2_move = NO_POINT
+            self.black_captures, self.white_captures = self.getLastCaptures()
 
             if move_result > max_result:
                 max_result = move_result
                 maximizing_move = move
 
-        #print(self.get_twoD_board())
+        print(max_result)
         if max_result >= 1:
             return color, maximizing_move
         elif max_result == 0:
-            return 'draw', maximizing_move
+            return 'Draw', maximizing_move
         else:
             return opponent(color), maximizing_move
 
@@ -354,7 +355,7 @@ class GoBoard(object):
             if value > alpha:
                 alpha = value
             
-            #assert(self.get_twoD_board() == board_copy).all(), f"Board copy does not match after undoing move at {move}\n{self.get_twoD_board()}"
+            #assert(self.board == board_copy).all()
 
             if value >= beta: 
                 return beta  # or value in failsoft (later)
