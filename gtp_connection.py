@@ -364,40 +364,34 @@ class GtpConnection:
         """ 
         Modify this function for Assignment 2.
         """
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
-        result1 = self.board.detect_five_in_a_row()
-        result2 = EMPTY
-        if self.board.get_captures(opponent(color)) >= 10:
-            result2 = opponent(color)
-        if result1 == opponent(color) or result2 == opponent(color):
-            self.respond("resign")
-            return
-        legal_moves = self.board.get_empty_points()
-        if legal_moves.size == 0:
-            self.respond("pass")
-            return
-        
-        result, move = self.board.call_alphabeta(color)
-        
-        move = format_point(point_to_coord(move, self.board.size))
-        
-        self.play_cmd([board_color, move.lower(), 'print_move'])
+        timelimit_end = time.time() + timelimit
+        while time.time() < timelimit_end: 
+            board_color = args[0].lower()
+            color = color_to_int(board_color)
+            result1 = self.board.detect_five_in_a_row()
+            result2 = EMPTY
+            if self.board.get_captures(opponent(color)) >= 10:
+                result2 = opponent(color)
+            if result1 == opponent(color) or result2 == opponent(color):
+                self.respond("resign")
+                return
+            legal_moves = self.board.get_empty_points()
+            if legal_moves.size == 0:
+                self.respond("pass")
+                return
+            
+            result, move = self.board.call_alphabeta(color)
+            
+            move = format_point(point_to_coord(move, self.board.size))
+            
+            self.play_cmd([board_color, move.lower(), 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
             Before the first timelimit command is given, the default is 1 second.  
             The seconds will range from  1 <= seconds <= 100
         """
-        if len(args) == 2:
-                timlimit = float(args[1])
-                return
-        if len(args) == 3:
-                timelimit = float(args[2])
-                return
-        else:
-            self.respond("Invalid Command, Try Again")
-            return
+        timelimit = float(args[0])
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
