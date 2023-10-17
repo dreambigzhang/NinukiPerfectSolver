@@ -28,6 +28,7 @@ from board_base import (
 from board import GoBoard
 from board_util import GoBoardUtil
 from engine import GoEngine
+import time
 
 timelimit = 1
 
@@ -373,30 +374,27 @@ class GtpConnection:
         if legal_moves.size == 0:
             self.respond("pass")
             return
-        
+                
+        timelimit_start = time.process_time()
         result, move = self.board.call_alphabeta(color)
+        time_elapsed = time.process_time() - timelimit_start
         
-        move = format_point(point_to_coord(move, self.board.size))
-        
-        self.play_cmd([board_color, move.lower(), 'print_move'])
+        if time_elapsed < timelimit:
+            move = format_point(point_to_coord(move, self.board.size))
+            self.play_cmd([board_color, move.lower(), 'print_move'])
+        else: 
+            self.play_cmd([board_color, move.lower(),'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
             Before the first timelimit command is given, the default is 1 second.  
             The seconds will range from  1 <= seconds <= 100
         """
-        if len(args) == 2:
-                timlimit = int(args[1])
-                return
-        if len(args) == 3:
-                timelimit = int(args[2])
-                return
-        else:
-            self.respond("Invalid Command, Try Again")
-            return
+        timelimit = float(args[0])
 
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
+
         color = self.board.current_player
         result1 = self.board.detect_five_in_a_row()
         result2 = EMPTY
@@ -410,25 +408,31 @@ class GtpConnection:
             self.respond("pass")
             return
         
+        timelimit_start = time.process_time()
         result, move = self.board.call_alphabeta(color)
+        time_elapsed = time.process_time() - timelimit_start
 
-        move = format_point(point_to_coord(move, self.board.size))
-        move = move.lower()
-        if result == opponent(color):
-            if result == WHITE:
-                self.respond('w')
-            elif result == BLACK:
-                self.respond('b')
+        if time_elapsed < timelimit:
+
+            move = format_point(point_to_coord(move, self.board.size))
+            move = move.lower()
+            if result == opponent(color):
+                if result == WHITE:
+                    self.respond('w')
+                elif result == BLACK:
+                    self.respond('b')
+                else:
+                    self.respond('draw')
             else:
-                self.respond('draw')
+                if result == WHITE:
+                    response = 'w'+ ' ' + move
+                elif result == BLACK:
+                    response = 'b'+ ' ' + move
+                else:
+                    response = 'draw' + ' ' + move
+                self.respond(response)
         else:
-            if result == WHITE:
-                response = 'w'+ ' ' + move
-            elif result == BLACK:
-                response = 'b'+ ' ' + move
-            else:
-                response = 'draw' + ' ' + move
-            self.respond(response)
+            self.respond('unknown')
 
     
 

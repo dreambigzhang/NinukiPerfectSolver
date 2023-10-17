@@ -13,7 +13,8 @@ The board uses a 1-dimensional representation with padding
 
 import numpy as np
 from typing import List, Tuple
-
+import time
+import gtp_connection
 
 from board_base import (
     board_array_size,
@@ -291,6 +292,11 @@ class GoBoard(object):
         return col + str(row)
     
     def call_alphabeta(self, color):
+        
+        timelimit_start = time.time()          
+        timelimit_allowed = gtp_connection.timelimit
+        timelimit_endGoal = timelimit_start + timelimit_allowed
+
         alpha = -10000
         beta = 10000
         max_result = -10000
