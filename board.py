@@ -155,7 +155,6 @@ class GoBoard(object):
         self.calculate_rows_cols_diags()
         self.black_captures = 0
         self.white_captures = 0
-        self.lastCaptures = [0, 0]
     
     def get_color(self, point: GO_POINT) -> GO_COLOR:
         return self.board[point]
@@ -302,9 +301,9 @@ class GoBoard(object):
         max_result = -10000
         maximizing_move = NO_POINT
         #captureCount = self.getCaptureCount()
-        print(self.get_twoD_board())
+        #print(self.get_twoD_board())
         for move in self.get_empty_points():
-            print(format_point(point_to_coord(move, self.size)))
+            #print(format_point(point_to_coord(move, self.size)))
             board_copy = self.copy()
             board_copy.play_move(move, color)
             move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
@@ -324,22 +323,32 @@ class GoBoard(object):
     
     def alphabeta(self, color, alpha, beta):
         if self.isGameOver():
-            print("game over")
-            print(self.get_twoD_board())
+            #print("game over")
+            #print(self.get_twoD_board())
             value = self.evalEndState(color)
-            print(value)
+            #print(value)
             return value
+        m = alpha
         legal_moves = self.get_empty_points()
+        
+        black_capture_count, white_capture_count = self.black_captures, self.white_captures
+        board_copy = np.copy(self.board)
         for point in legal_moves:
             #print(point)
-            board_copy = self.copy()
-            board_copy.play_move(point, color)
-            value = - board_copy.alphabeta(opponent(color), -beta, -alpha)
-            if value > alpha:
-                alpha = value
-            if value >= beta: 
-                return beta  # or value in failsoft (later)
-        return alpha
+            
+            self.play_move(point, color)
+            value = - self.alphabeta(opponent(color), -beta, -alpha)
+
+            self.board = board_copy
+            self.black_captures, self.white_captures = black_capture_count, white_capture_count
+            self.current_player = color
+
+            if value > m:
+                m = value
+            if m >= beta: 
+                return m  # or value in failsoft (later)
+            alpha = max(alpha, m)
+        return m
     
 
     def undoMove(self, color, move, captureCount, black_captured, white_captured):
@@ -354,6 +363,7 @@ class GoBoard(object):
         self.current_player = color
 
     def evalEndState(self, color):
+        #print(color)
         if self.detect_five_in_a_row() == color:
             return 1
         elif self.detect_five_in_a_row() == opponent(color):
@@ -401,8 +411,6 @@ class GoBoard(object):
             board_moves.append(self.last2_move)
         return board_moves
 
-    def getCaptureCount(self):
-        return [self.black_captures, self.white_captures]
 
     def detect_five_in_a_row(self) -> GO_COLOR:
         """
