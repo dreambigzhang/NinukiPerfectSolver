@@ -407,25 +407,31 @@ class GtpConnection:
             self.respond("pass")
             return
         
+        timelimit_start = time.process_time()
         result, move = self.board.call_alphabeta(color)
+        time_elapsed = time.process_time() - timelimit_start
 
-        move = format_point(point_to_coord(move, self.board.size))
-        move = move.lower()
-        if result == opponent(color):
-            if result == WHITE:
-                self.respond('w')
-            elif result == BLACK:
-                self.respond('b')
+        if time_elapsed < timelimit:
+
+            move = format_point(point_to_coord(move, self.board.size))
+            move = move.lower()
+            if result == opponent(color):
+                if result == WHITE:
+                    self.respond('w')
+                elif result == BLACK:
+                    self.respond('b')
+                else:
+                    self.respond('draw')
             else:
-                self.respond('draw')
+                if result == WHITE:
+                    response = 'w'+ ' ' + move
+                elif result == BLACK:
+                    response = 'b'+ ' ' + move
+                else:
+                    response = 'draw' + ' ' + move
+                self.respond(response)
         else:
-            if result == WHITE:
-                response = 'w'+ ' ' + move
-            elif result == BLACK:
-                response = 'b'+ ' ' + move
-            else:
-                response = 'draw' + ' ' + move
-            self.respond(response)
+            self.respond('unknown')
 
     
 
