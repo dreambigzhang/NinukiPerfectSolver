@@ -19,7 +19,7 @@ from board_base import (
     WHITE,
     EMPTY,
     BORDER,
-    GO_COLOR, GO_POINT,
+    GO_COLOR, GO_POINT, NO_POINT,
     PASS,
     MAXSIZE,
     coord_to_point,
@@ -30,7 +30,7 @@ from board_util import GoBoardUtil
 from engine import GoEngine
 import time
 
-timelimit = 1
+timelimit = 1.0
 
 class GtpConnection:
     def __init__(self, go_engine: GoEngine, board: GoBoard, debug_mode: bool = False) -> None:
@@ -410,14 +410,14 @@ class GtpConnection:
             self.respond("pass")
             return
         
-        timelimit_start = time.process_time()
         result, move = self.board.call_alphabeta(color)
-        time_elapsed = time.process_time() - timelimit_start
 
-        if time_elapsed < timelimit:
+        move = format_point(point_to_coord(move, self.board.size))
+        move = move.lower()
 
-            move = format_point(point_to_coord(move, self.board.size))
-            move = move.lower()
+        if move == NO_POINT:
+            self.respond("unknown")
+        else:
             if result == opponent(color):
                 if result == WHITE:
                     self.respond('w')
@@ -433,8 +433,6 @@ class GtpConnection:
                 else:
                     response = 'draw' + ' ' + move
                 self.respond(response)
-        else:
-            self.respond('unknown')
 
     
 

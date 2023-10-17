@@ -292,29 +292,33 @@ class GoBoard(object):
     
     def call_alphabeta(self, color):
         
-        alpha = -10000
-        beta = 10000
-        max_result = -10000
-        maximizing_move = NO_POINT
-        #captureCount = self.getCaptureCount()
-        #print(self.get_twoD_board())
-        for move in self.get_empty_points():
-            #print(format_point(point_to_coord(move, self.size)))
-            board_copy = self.copy()
-            board_copy.play_move(move, color)
-            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
+        timelimit_start = time.process_time()
+        time_end = timelimit_start + gtp_connection.timelimit
 
-            if move_result > max_result:
-                max_result = move_result
-                maximizing_move = move
+        while timelimit_start < time_end:
+            alpha = -10000
+            beta = 10000
+            max_result = -10000
+            maximizing_move = NO_POINT
+            #captureCount = self.getCaptureCount()
+            #print(self.get_twoD_board())
+            for move in self.get_empty_points():
+                #print(format_point(point_to_coord(move, self.size)))
+                board_copy = self.copy()
+                board_copy.play_move(move, color)
+                move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
 
-        if max_result >= 1:
-            return color, maximizing_move
-        elif max_result == 0:
-            return 'Draw', maximizing_move
-        else:
-            return opponent(color), maximizing_move
+                if move_result > max_result:
+                    max_result = move_result
+                    maximizing_move = move
 
+            if max_result >= 1:
+                return color, maximizing_move
+            elif max_result == 0:
+                return 'Draw', maximizing_move
+            else:
+                return opponent(color), maximizing_move
+        return color, maximizing_move
  
     
     def alphabeta(self, color, alpha, beta):
