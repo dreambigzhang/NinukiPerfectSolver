@@ -375,11 +375,17 @@ class GtpConnection:
             self.respond("pass")
             return
         
+        timelimit_start = time.process_time()
         result, move = self.board.call_alphabeta(color)
+        time_elapsed = time.process_time() - timelimit_start
         
-        move = format_point(point_to_coord(move, self.board.size))
-        
-        self.play_cmd([board_color, move.lower(), 'print_move'])
+        if time_elapsed < timelimit:
+            move = format_point(point_to_coord(move, self.board.size))
+            self.play_cmd([board_color, move.lower(), 'print_move'])
+        else:
+            legal_moves_array = self.board.get_empty_points()
+            random_move = np.random.choice(legal_moves_array)
+            self.play_cmd(random_move, color)
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
