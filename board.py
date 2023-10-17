@@ -296,7 +296,7 @@ class GoBoard(object):
         timelimit_allowed = gtp_connection.timelimit
         timelimit_endGoal = timelimit_start + timelimit_allowed
 
-        while time.process_time() < time_end:
+        while time.process_time() < timelimit_endGoal:
             alpha = -10000
             beta = 10000
             max_result = -10000
