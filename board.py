@@ -299,12 +299,14 @@ class GoBoard(object):
         beta = 10000
         max_result = -10000
         maximizing_move = NO_POINT
+        time_out = NO_POINT
+
         #captureCount = self.getCaptureCount()
         #print(self.get_twoD_board())
         for move in self.get_empty_points():
             #print(format_point(point_to_coord(move, self.size)))
             if time.process_time() >= time_end:
-                return color, maximizing_move
+                return color, time_out
             board_copy = self.copy()
             board_copy.play_move(move, color)
             move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
