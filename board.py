@@ -292,10 +292,6 @@ class GoBoard(object):
     
     def call_alphabeta(self, color):
         
-        timelimit_start = time.time()          
-        timelimit_allowed = gtp_connection.timelimit
-        timelimit_endGoal = timelimit_start + timelimit_allowed
-
         alpha = -10000
         beta = 10000
         max_result = -10000
