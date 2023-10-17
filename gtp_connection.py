@@ -333,15 +333,12 @@ class GtpConnection:
             move = coord_to_point(coord[0], coord[1], self.board.size)
             
             color = color_to_int(board_color)
-            if not self.board.play_move(move, color):
-                # self.respond("Illegal Move: {}".format(board_move))
-                self.respond('illegal move: "{} {}" occupied'.format(board_color, board_move))
-                return
-            else:
-                # self.board.try_captures(coord, color)
-                self.debug_msg(
-                    "Move: {}\nBoard:\n{}\n".format(board_move, self.board2d())
-                )
+            
+            self.board.play_move(move, color)
+            # self.board.try_captures(coord, color)
+            self.debug_msg(
+                "Move: {}\nBoard:\n{}\n".format(board_move, self.board2d())
+            )
             if len(args) > 2 and args[2] == 'print_move':
                 move_as_string = format_point(coord)
                 self.respond(move_as_string.lower())
