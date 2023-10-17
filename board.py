@@ -248,10 +248,9 @@ class GoBoard(object):
                 single_capture = nb_point
         return single_capture
     
-    def play_move(self, point: GO_POINT, color: GO_COLOR) -> bool:
+    def play_move(self, point: GO_POINT, color: GO_COLOR):
         """
         Tries to play a move of color on the point.
-        Returns whether or not the point was empty.
         """
         if self.board[point] != EMPTY:
             return False
@@ -259,8 +258,6 @@ class GoBoard(object):
         self.current_player = opponent(color)
         self.last2_move = self.last_move
         self.last_move = point
-
-        self.lastCaptures = [self.black_captures, self.white_captures]
 
         O = opponent(color)
         offsets = [1, -1, self.NS, -self.NS, self.NS+1, -(self.NS+1), self.NS-1, -self.NS+1]
@@ -279,13 +276,10 @@ class GoBoard(object):
     
     
     def isGameOver(self):
-        return self.end_of_game() or self.detect_five_in_a_row() != EMPTY or self.black_captures >= 10 or self.white_captures >= 10 or self.boardIsFull()
+        return self.end_of_game() or self.detect_five_in_a_row() != EMPTY or self.boardIsFull() or self.black_captures >= 10 or self.white_captures >= 10
     
     def boardIsFull(self):
-        for point in self.board:
-            if point == EMPTY:
-                return False
-        return True
+        return not EMPTY in self.board
 
     def index_to_position(self, index: int) -> str:
         """
@@ -297,30 +291,22 @@ class GoBoard(object):
         return col + str(row)
     
     def call_alphabeta(self, color):
-
         alpha = -10000
         beta = 10000
         max_result = -10000
         maximizing_move = NO_POINT
-        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
-
-        for move in legal_moves:
-            board_copy = np.copy(self.board)
-
-            self.play_move(move, color)
-            move_result = - self.alphabeta(opponent(color), alpha, beta)
-            
-            self.board = board_copy
-            self.current_player = opponent(self.current_player)
-            self.last_move = self.last2_move
-            self.last2_move = NO_POINT
-            self.black_captures, self.white_captures = self.getLastCaptures()
+        #captureCount = self.getCaptureCount()
+        print(self.get_twoD_board())
+        for move in self.get_empty_points():
+            print(format_point(point_to_coord(move, self.size)))
+            board_copy = self.copy()
+            board_copy.play_move(move, color)
+            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
 
             if move_result > max_result:
                 max_result = move_result
                 maximizing_move = move
 
-        print(max_result)
         if max_result >= 1:
             return color, maximizing_move
         elif max_result == 0:
@@ -328,45 +314,18 @@ class GoBoard(object):
         else:
             return opponent(color), maximizing_move
 
-
-    def alphabeta(self, color, alpha, beta): # negamax
-        if self.isGameOver():
-            return self.evalEndState()
-        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
-        '''
-        formatted_moves = []
-        for move in legal_moves:
-            formatted_moves.append(format_point(point_to_coord(move, self.size)))
-        print(self.get_twoD_board())
-        print(formatted_moves)
-        '''
-        for move in legal_moves:
-            board_copy = np.copy(self.board)
-
-            self.play_move(move, color)
-            value = - self.alphabeta(opponent(color), -beta, -alpha)
-            
-            self.board = board_copy
-            self.current_player = opponent(self.current_player)
-            self.last_move = self.last2_move
-            self.last2_move = NO_POINT
-            self.black_captures, self.white_captures = self.getLastCaptures()
-
-            if value > alpha:
-                alpha = value
-            
-            #assert(self.board == board_copy).all()
-
-            if value >= beta: 
-                return beta  # or value in failsoft (later)
-        return alpha
  
-    '''
+    
     def alphabeta(self, color, alpha, beta):
         if self.isGameOver():
-            return self.evalEndState(color)
-        legal_moves: np.ndarray[GO_POINT] = self.get_empty_points()
+            print("game over")
+            print(self.get_twoD_board())
+            value = self.evalEndState(color)
+            print(value)
+            return value
+        legal_moves = self.get_empty_points()
         for point in legal_moves:
+            #print(point)
             board_copy = self.copy()
             board_copy.play_move(point, color)
             value = - board_copy.alphabeta(opponent(color), -beta, -alpha)
@@ -375,17 +334,20 @@ class GoBoard(object):
             if value >= beta: 
                 return beta  # or value in failsoft (later)
         return alpha
-    '''
+    
 
-    def undoMove(self):
-        self.board[self.last_move] = EMPTY
-        self.current_player = opponent(self.current_player)
-        self.last_move = self.last2_move
-        self.last2_move = NO_POINT
-        self.black_captures, self.white_captures = self.getLastCaptures()
+    def undoMove(self, color, move, captureCount, black_captured, white_captured):
+        self.board[move] = EMPTY
+        self.black_captures, self.white_captures = captureCount[0], captureCount[1]
+        if color == BLACK:
+            for point in white_captured:
+                self.board[point] = WHITE
+        else:
+            for point in black_captured:
+                self.board[point] = BLACK
+        self.current_player = color
 
-    def evalEndState(self):
-        color = self.current_player
+    def evalEndState(self, color):
         if self.detect_five_in_a_row() == color:
             return 1
         elif self.detect_five_in_a_row() == opponent(color):
@@ -433,8 +395,8 @@ class GoBoard(object):
             board_moves.append(self.last2_move)
         return board_moves
 
-    def getLastCaptures(self):
-        return self.lastCaptures[0], self.lastCaptures[1]
+    def getCaptureCount(self):
+        return [self.black_captures, self.white_captures]
 
     def detect_five_in_a_row(self) -> GO_COLOR:
         """
