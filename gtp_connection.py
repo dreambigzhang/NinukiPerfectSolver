@@ -364,27 +364,25 @@ class GtpConnection:
         """ 
         Modify this function for Assignment 2.
         """
-        timelimit_end = time.time() + timelimit
-        while time.time() < timelimit_end: 
-            board_color = args[0].lower()
-            color = color_to_int(board_color)
-            result1 = self.board.detect_five_in_a_row()
-            result2 = EMPTY
-            if self.board.get_captures(opponent(color)) >= 10:
-                result2 = opponent(color)
-            if result1 == opponent(color) or result2 == opponent(color):
-                self.respond("resign")
-                return
-            legal_moves = self.board.get_empty_points()
-            if legal_moves.size == 0:
-                self.respond("pass")
-                return
-            
-            result, move = self.board.call_alphabeta(color)
-            
-            move = format_point(point_to_coord(move, self.board.size))
-            
-            self.play_cmd([board_color, move.lower(), 'print_move'])
+        board_color = args[0].lower()
+        color = color_to_int(board_color)
+        result1 = self.board.detect_five_in_a_row()
+        result2 = EMPTY
+        if self.board.get_captures(opponent(color)) >= 10:
+            result2 = opponent(color)
+        if result1 == opponent(color) or result2 == opponent(color):
+            self.respond("resign")
+            return
+        legal_moves = self.board.get_empty_points()
+        if legal_moves.size == 0:
+            self.respond("pass")
+            return
+        
+        result, move = self.board.call_alphabeta(color)
+        
+        move = format_point(point_to_coord(move, self.board.size))
+        
+        self.play_cmd([board_color, move.lower(), 'print_move'])
     
     def timelimit_cmd(self, args: List[str]) -> None:
         """ This command sets the maximum time to use for all following genmove or solve commands until it is changed by another timelimit command.
@@ -396,40 +394,38 @@ class GtpConnection:
     def solve_cmd(self, args: List[str]) -> None:
         """ Implement this function for Assignment 2 """
 
-        timelimit_end = time.time() + timelimit
-        while time.time() < timelimit_end: 
-            color = self.board.current_player
-            result1 = self.board.detect_five_in_a_row()
-            result2 = EMPTY
-            if self.board.get_captures(opponent(color)) >= 10:
-                result2 = opponent(color)
-            if result1 == opponent(color) or result2 == opponent(color):
-                self.respond("resign")
-                return
-            legal_moves = self.board.get_empty_points()
-            if legal_moves.size == 0:
-                self.respond("pass")
-                return
-            
-            result, move = self.board.call_alphabeta(color)
+        color = self.board.current_player
+        result1 = self.board.detect_five_in_a_row()
+        result2 = EMPTY
+        if self.board.get_captures(opponent(color)) >= 10:
+            result2 = opponent(color)
+        if result1 == opponent(color) or result2 == opponent(color):
+            self.respond("resign")
+            return
+        legal_moves = self.board.get_empty_points()
+        if legal_moves.size == 0:
+            self.respond("pass")
+            return
+        
+        result, move = self.board.call_alphabeta(color)
 
-            move = format_point(point_to_coord(move, self.board.size))
-            move = move.lower()
-            if result == opponent(color):
-                if result == WHITE:
-                    self.respond('w')
-                elif result == BLACK:
-                    self.respond('b')
-                else:
-                    self.respond('draw')
+        move = format_point(point_to_coord(move, self.board.size))
+        move = move.lower()
+        if result == opponent(color):
+            if result == WHITE:
+                self.respond('w')
+            elif result == BLACK:
+                self.respond('b')
             else:
-                if result == WHITE:
-                    response = 'w'+ ' ' + move
-                elif result == BLACK:
-                    response = 'b'+ ' ' + move
-                else:
-                    response = 'draw' + ' ' + move
-                self.respond(response)
+                self.respond('draw')
+        else:
+            if result == WHITE:
+                response = 'w'+ ' ' + move
+            elif result == BLACK:
+                response = 'b'+ ' ' + move
+            else:
+                response = 'draw' + ' ' + move
+            self.respond(response)
 
     
 
