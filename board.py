@@ -296,17 +296,18 @@ class GoBoard(object):
         timelimit_allowed = gtp_connection.timelimit
         timelimit_endGoal = timelimit_start + timelimit_allowed
 
-        alpha = -10000
-        beta = 10000
-        max_result = -10000
-        maximizing_move = NO_POINT
-        #captureCount = self.getCaptureCount()
-        #print(self.get_twoD_board())
-        for move in self.get_empty_points():
-            #print(format_point(point_to_coord(move, self.size)))
-            board_copy = self.copy()
-            board_copy.play_move(move, color)
-            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
+        while time.process_time() < time_end:
+            alpha = -10000
+            beta = 10000
+            max_result = -10000
+            maximizing_move = NO_POINT
+            #captureCount = self.getCaptureCount()
+            #print(self.get_twoD_board())
+            for move in self.get_empty_points():
+                #print(format_point(point_to_coord(move, self.size)))
+                board_copy = self.copy()
+                board_copy.play_move(move, color)
+                move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
 
             if move_result > max_result:
                 max_result = move_result
