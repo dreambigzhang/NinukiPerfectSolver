@@ -291,10 +291,9 @@ class GoBoard(object):
         return col + str(row)
     
     def call_alphabeta(self, color):
-        
+        global timelimit_start
         timelimit_start = time.time()          
-        timelimit_allowed = gtp_connection.timelimit
-        timelimit_endGoal = timelimit_start + timelimit_allowed
+        
 
         alpha = -10000
         beta = 10000
@@ -306,12 +305,12 @@ class GoBoard(object):
         #print(self.get_twoD_board())
         for move in self.get_empty_points():
             #print(format_point(point_to_coord(move, self.size)))
-            if time.process_time() >= timelimit_endGoal:
-                return color, time_out
             board_copy = self.copy()
             board_copy.play_move(move, color)
-            move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
-
+            try:
+                move_result = - board_copy.alphabeta(opponent(color), alpha, beta)
+            except:
+                return 'unknown', NO_POINT
             if move_result > max_result:
                 max_result = move_result
                 maximizing_move = move
@@ -325,6 +324,9 @@ class GoBoard(object):
  
     
     def alphabeta(self, color, alpha, beta):
+        if time.time() - timelimit_start > gtp_connection.timelimit:
+            raise Exception('timeout')
+        
         if self.isGameOver():
             #print("game over")
             #print(self.get_twoD_board())
@@ -337,6 +339,7 @@ class GoBoard(object):
         black_capture_count, white_capture_count = self.black_captures, self.white_captures
         
         for point in legal_moves:
+            
             #print(point)
             board_copy = np.copy(self.board)
             self.play_move(point, color)

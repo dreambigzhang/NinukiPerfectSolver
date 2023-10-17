@@ -377,10 +377,10 @@ class GtpConnection:
         
         result, move = self.board.call_alphabeta(color)
 
-        if result == NO_POINT:
+        if result == "unknown":
             legal_moves_array = self.board.get_empty_points()
             random_move = np.random.choice(legal_moves_array)
-            self.play_cmd(random_move, color)
+            self.play_cmd([board_color, format_point(point_to_coord(random_move, self.board.size))])
             
         else:
             move = format_point(point_to_coord(move, self.board.size))
@@ -392,6 +392,7 @@ class GtpConnection:
             Before the first timelimit command is given, the default is 1 second.  
             The seconds will range from  1 <= seconds <= 100
         """
+        global timelimit
         timelimit = float(args[0])
 
     def solve_cmd(self, args: List[str]) -> None:
@@ -412,6 +413,9 @@ class GtpConnection:
         
         result, move = self.board.call_alphabeta(color)
 
+        if result == "unknown":
+            self.respond("unknown")
+            return
         move = format_point(point_to_coord(move, self.board.size))
         move = move.lower()
 
