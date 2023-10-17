@@ -304,7 +304,7 @@ class GoBoard(object):
         #print(self.get_twoD_board())
         for move in self.get_empty_points():
             #print(format_point(point_to_coord(move, self.size)))
-            if time.process_time() > time_end:
+            if time.process_time() > timelimit_endGoal:
                 return color, maximizing_move
             board_copy = self.copy()
             board_copy.play_move(move, color)
